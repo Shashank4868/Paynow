@@ -1,4 +1,4 @@
-package com.personal.payment.event;
+package com.personal.payment.kafka.event;
 
 import java.math.BigDecimal;
 import java.time.Instant;

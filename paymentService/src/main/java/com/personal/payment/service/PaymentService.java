@@ -2,12 +2,15 @@ package com.personal.payment.service;
 
 import com.personal.payment.dto.CreatePaymentRequest;
 import com.personal.payment.entity.Payment;
-import com.personal.payment.entity.PaymentStatus;
-import com.personal.payment.event.PaymentCreatedEvent;
-import com.personal.payment.event.PaymentEventPublisher;
+import com.personal.payment.exception.DuplicateIdempotencyKeyException;
+import com.personal.payment.exception.PaymentNotFoundException;
+import com.personal.payment.kafka.PaymentDecisionHandler;
+import com.personal.payment.kafka.PaymentEventPublisher;
+import com.personal.payment.kafka.event.PaymentCreatedEvent;
+import com.personal.payment.mapper.PaymentMapper;
 import com.personal.payment.repo.PaymentRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -18,32 +21,29 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final PaymentEventPublisher paymentEventPublisher;
+    private final PaymentMapper paymentMapper;
+    private final PaymentDecisionHandler paymentDecisionHandler;
 
-    public PaymentService(PaymentRepository paymentRepository, PaymentEventPublisher paymentEventPublisher) {
+    public PaymentService(PaymentRepository paymentRepository, PaymentEventPublisher paymentEventPublisher, PaymentMapper paymentMapper, PaymentDecisionHandler paymentDecisionHandler) {
         this.paymentRepository = paymentRepository;
         this.paymentEventPublisher = paymentEventPublisher;
+        this.paymentMapper = paymentMapper;
+        this.paymentDecisionHandler = paymentDecisionHandler;
     }
 
-    public ResponseEntity<?> CreatePayment(CreatePaymentRequest request) {
+    @Transactional
+    public Payment createPayment(CreatePaymentRequest request) {
         Payment existingPayment = paymentRepository
                 .findByIdempotencyKey(request.idempotencyKey())
                 .orElse(null);
 
         if (existingPayment != null) {
-            return ResponseEntity.ok(existingPayment);
+            throw new DuplicateIdempotencyKeyException(
+                    "Idempotency key already exists: " + request.idempotencyKey());
         }
 
         try {
-            Payment newPayment = Payment.builder()
-                    .senderId(request.senderId())
-                    .receiverId(request.receiverId())
-                    .amount(request.amount())
-                    .currency(request.currency())
-                    .idempotencyKey(request.idempotencyKey())
-                    .reference(request.reference())
-                    .status(PaymentStatus.PENDING)
-                    .build();
-
+            Payment newPayment = paymentMapper.toPayment(request);
             System.out.println("Payment Initiated");
             Payment savedPayment = paymentRepository.saveAndFlush(newPayment);
             System.out.println("Payment Saved Successfully");
@@ -59,40 +59,33 @@ public class PaymentService {
             );
 
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedPayment);
+            return savedPayment;
 
         } catch (DataIntegrityViolationException exception) {
-            return paymentRepository
-                    .findByIdempotencyKey(request.idempotencyKey())
-                    .<ResponseEntity<?>>map(ResponseEntity::ok)
-                    .orElseGet(() -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body("Failed to create payment"));
+            throw new DuplicateIdempotencyKeyException(
+                    "Idempotency key already exists: " + request.idempotencyKey());
         }
     }
 
-    public ResponseEntity<?> getPaymentById(String id) {
-        try {
-            return paymentRepository.findById(UUID.fromString(id))
-                    .<ResponseEntity<?>>map(ResponseEntity::ok)
-                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("Payment not found"));
-        } catch (IllegalArgumentException exception) {
-            return ResponseEntity.badRequest().body("Invalid Payment ID");
-        }
+    public ResponseEntity<?> getPaymentById(UUID id) {
+        return paymentRepository.findById(id)
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseThrow(() -> new PaymentNotFoundException("Payment not found: " + id));
     }
 
-
-    //    TODO
-    public ResponseEntity<?> processPayment(UUID paymentId) {
+    @Transactional
+    public void approvePayment(UUID paymentId) {
         Payment payment = paymentRepository.findById(paymentId)
-                .orElse(null);
-        if (payment == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Payment not found");
-        }
-        try {
-            Payment updatedPayment = paymentRepository.saveAndFlush(payment);
-        } catch (DataIntegrityViolationException exception) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Payment already exists");
-        }
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body("Payment Updated");
+                .orElseThrow(() -> new PaymentNotFoundException("Payment not found: " + paymentId));
+        paymentDecisionHandler.approve(payment);
+        paymentRepository.save(payment);
+    }
+
+    @Transactional
+    public void flagPayment(UUID paymentId, String reason) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new PaymentNotFoundException("Payment not found: " + paymentId));
+        paymentDecisionHandler.flag(payment, reason);
+        paymentRepository.save(payment);
     }
 }

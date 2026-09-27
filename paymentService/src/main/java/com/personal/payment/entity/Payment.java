@@ -1,7 +1,10 @@
 package com.personal.payment.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -25,10 +28,10 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false, length = 50)
     private String senderId;
 
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false, length = 50)
     private String receiverId;
 
     @Column(nullable = false, precision = 19, scale = 4)
@@ -41,7 +44,7 @@ public class Payment {
     @Column(nullable = false)
     private PaymentStatus status;
 
-    @Column(name = "idempotency_key", nullable = false, updatable = false)
+    @Column(name = "idempotency_key", nullable = false, updatable = false, length = 50)
     private String idempotencyKey;
 
     private String reference;
