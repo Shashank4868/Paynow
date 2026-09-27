@@ -26,5 +26,20 @@ public record CreatePaymentRequest(
         @NotBlank(message = "Idempotency key is required")
         String idempotencyKey,
 
+        @Pattern(
+                regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+                message = "Sender email must be valid"
+        )
+        @NotBlank(message = "Sender email is required")
+        String senderEmail,
+
+        @Pattern(
+                regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+                message = "Receiver email must be valid"
+        )
+        @NotBlank(message = "Receiver email is required")
+        String receiverEmail,
+
         String reference
-) {}
+) {
+}

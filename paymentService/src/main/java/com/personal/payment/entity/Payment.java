@@ -1,6 +1,7 @@
 package com.personal.payment.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -56,6 +57,14 @@ public class Payment {
 
     @Column(nullable = false)
     private Instant updatedAt;
+
+    @Email
+    @Column(nullable = false, updatable = false)
+    private String senderEmail;
+
+    @Email
+    @Column(nullable = false, updatable = false)
+    private String receiverEmail;
 
     @PrePersist
     void beforeInsert() {

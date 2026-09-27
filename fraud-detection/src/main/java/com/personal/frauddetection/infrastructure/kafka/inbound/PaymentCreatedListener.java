@@ -11,13 +11,11 @@ public class PaymentCreatedListener {
 
     private static final String PAYMENT_DECISION_TOPIC = "payment.decision";
 
-    private final FraudEvaluationService fraudEvaluationService;
+
     private final FraudEventPublisher eventPublisher;
 
     public PaymentCreatedListener(
-            FraudEvaluationService fraudEvaluationService,
             FraudEventPublisher eventPublisher) {
-        this.fraudEvaluationService = fraudEvaluationService;
         this.eventPublisher = eventPublisher;
     }
 
@@ -27,7 +25,7 @@ public class PaymentCreatedListener {
     )
     public void consume(PaymentCreatedEvent event) {
         eventPublisher.publish(
-                fraudEvaluationService.evaluate(event),
+                event,
                 PAYMENT_DECISION_TOPIC
         );
     }

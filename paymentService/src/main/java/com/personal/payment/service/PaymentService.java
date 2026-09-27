@@ -10,6 +10,7 @@ import com.personal.payment.kafka.event.PaymentCreatedEvent;
 import com.personal.payment.mapper.PaymentMapper;
 import com.personal.payment.repo.PaymentRepository;
 import jakarta.transaction.Transactional;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -33,11 +34,7 @@ public class PaymentService {
 
     @Transactional
     public Payment createPayment(CreatePaymentRequest request) {
-        Payment existingPayment = paymentRepository
-                .findByIdempotencyKey(request.idempotencyKey())
-                .orElse(null);
-
-        if (existingPayment != null) {
+        if (paymentRepository.existsByIdempotencyKey(request.idempotencyKey())) {
             throw new DuplicateIdempotencyKeyException(
                     "Idempotency key already exists: " + request.idempotencyKey());
         }
@@ -54,7 +51,9 @@ public class PaymentService {
                             savedPayment.getReceiverId(),
                             savedPayment.getAmount(),
                             savedPayment.getCurrency(),
-                            savedPayment.getCreatedAt()
+                            savedPayment.getCreatedAt(),
+                            savedPayment.getSenderEmail(),
+                            savedPayment.getReceiverEmail()
                     )
             );
 
@@ -62,9 +61,24 @@ public class PaymentService {
             return savedPayment;
 
         } catch (DataIntegrityViolationException exception) {
-            throw new DuplicateIdempotencyKeyException(
-                    "Idempotency key already exists: " + request.idempotencyKey());
+            if (isIdempotencyKeyConstraintViolation(exception)) {
+                throw new DuplicateIdempotencyKeyException(
+                        "Idempotency key already exists: " + request.idempotencyKey());
+            }
+            throw exception;
         }
+    }
+
+    private boolean isIdempotencyKeyConstraintViolation(Throwable exception) {
+        Throwable cause = exception;
+        while (cause != null) {
+            if (cause instanceof ConstraintViolationException violation
+                    && "uk_payment_idempotency_key".equals(violation.getConstraintName())) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return false;
     }
 
     public ResponseEntity<?> getPaymentById(UUID id) {

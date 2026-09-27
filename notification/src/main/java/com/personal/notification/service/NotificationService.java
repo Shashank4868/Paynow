@@ -16,6 +16,7 @@ public class NotificationService {
         try {
         emailService.send(
                 event.recipient(),
+                event.sender(),
                 event.subject(),
                 event.message()
         );

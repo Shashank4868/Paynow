@@ -18,6 +18,8 @@ public class PaymentMapper {
                 .amount(request.amount())
                 .currency(request.currency())
                 .idempotencyKey(request.idempotencyKey())
+                .senderEmail(request.senderEmail())
+                .receiverEmail(request.receiverEmail())
                 .reference(request.reference())
                 .status(PaymentStatus.PENDING)
                 .build();
