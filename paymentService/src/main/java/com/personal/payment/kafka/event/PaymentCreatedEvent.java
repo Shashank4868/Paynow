@@ -10,6 +10,8 @@ public record PaymentCreatedEvent(
         String receiverId,
         BigDecimal amount,
         String currency,
-        Instant createdAt
+        Instant createdAt,
+        String senderEmail,
+        String receiverEmail
 ) {
 }

@@ -14,11 +14,12 @@ public class EmailService {
         this.mailSender = mailSender;
     }
 
-    public void send(String recipient, String subject, FraudDecision message) {
+    public void send(String recipient, String sender, String subject, FraudDecision message) {
         SimpleMailMessage email = new SimpleMailMessage();
         email.setTo(recipient);
-        email.setSubject(subject);
-        email.setText(message.toString());
+        email.setFrom(sender);
+        email.setSubject(String.format("PayNow alert: %s - %s (from %s)", subject, message, sender));
+        email.setText(String.format("Payment sender: %s%nReason: %s%nDecision: %s", sender, subject, message));
 
         mailSender.send(email);
     }

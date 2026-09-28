@@ -77,3 +77,30 @@ databaseChangeLog:
             tableName: payments
             columnNames: idempotency_key
             constraintName: uk_payment_idempotency_key
+
+  - changeSet:
+    id: 2
+    author: shashank
+    changes:
+      - addColumn:
+          tableName: payments
+          columns:
+            - column:
+                name: senderEmail
+                type: VARCHAR(255)
+            - sql:
+                sql: |
+                  ALTER TABLE payments
+                  ADD CONSTRAINT chk_sender_email_format
+                  CHECK (senderEmail IS NULL OR senderEmail ~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$');
+      - addColumn:
+          tableName: payments
+          columns:
+            - column:
+                name: receiverEmail
+                type: VARCHAR(255)
+            - sql:
+                sql: |
+                  ALTER TABLE payments
+                  ADD CONSTRAINT chk_receiver_email_format
+                  CHECK (receiverEmail IS NULL OR receiverEmail ~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$');
