@@ -1,4 +1,4 @@
-package com.personal.payment.dto;
+package com.personal.payment.entity;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -7,10 +7,11 @@ import jakarta.validation.constraints.Pattern;
 
 import java.math.BigDecimal;
 
+/**
+ * Body of POST /payments/create-payment.
+ * There is deliberately no senderId/senderEmail: the sender is the signed-in user (JWT).
+ */
 public record CreatePaymentRequest(
-
-        @NotBlank(message = "Sender ID is required")
-        String senderId,
 
         @NotBlank(message = "Receiver ID is required")
         String receiverId,
@@ -25,13 +26,6 @@ public record CreatePaymentRequest(
 
         @NotBlank(message = "Idempotency key is required")
         String idempotencyKey,
-
-        @Pattern(
-                regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
-                message = "Sender email must be valid"
-        )
-        @NotBlank(message = "Sender email is required")
-        String senderEmail,
 
         @Pattern(
                 regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",

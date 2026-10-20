@@ -1,25 +1,30 @@
 package com.personal.payment.mapper;
 
-import com.personal.payment.dto.CreatePaymentRequest;
 import com.personal.payment.dto.PaymentResponse;
+import com.personal.payment.entity.CreatePaymentRequest;
 import com.personal.payment.entity.Payment;
-import com.personal.payment.entity.PaymentStatus;
+import com.personal.payment.enums.PaymentStatus;
 import org.springframework.stereotype.Component;
 
 @Component
 public class PaymentMapper {
-    public Payment toPayment(CreatePaymentRequest request) {
+
+    /**
+     * Builds a new payment. The sender always comes from the authenticated user's token,
+     * never from the request body.
+     */
+    public Payment toPayment(CreatePaymentRequest request, String senderId, String senderEmail) {
         if (request == null) {
             throw new IllegalArgumentException("Payment request must not be null");
         }
         return Payment.builder()
-                .senderId(request.senderId())
+                .senderId(senderId)
+                .senderEmail(senderEmail)
                 .receiverId(request.receiverId())
+                .receiverEmail(request.receiverEmail())
                 .amount(request.amount())
                 .currency(request.currency())
                 .idempotencyKey(request.idempotencyKey())
-                .senderEmail(request.senderEmail())
-                .receiverEmail(request.receiverEmail())
                 .reference(request.reference())
                 .status(PaymentStatus.PENDING)
                 .build();
@@ -30,12 +35,16 @@ public class PaymentMapper {
             throw new IllegalArgumentException("Payment must not be null");
         }
         return PaymentResponse.builder()
+                .id(payment.getId())
                 .senderId(payment.getSenderId())
                 .receiverId(payment.getReceiverId())
                 .amount(payment.getAmount())
                 .currency(payment.getCurrency())
-                .reference(payment.getReference())
                 .status(payment.getStatus())
+                .idempotencyKey(payment.getIdempotencyKey())
+                .reference(payment.getReference())
+                .createdAt(payment.getCreatedAt())
+                .updatedAt(payment.getUpdatedAt())
                 .build();
     }
 }

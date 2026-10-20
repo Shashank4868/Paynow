@@ -1,4 +1,4 @@
-package com.personal.payment.entity;
+package com.personal.payment.enums;
 
 public enum FraudDecision {
     APPROVED,
