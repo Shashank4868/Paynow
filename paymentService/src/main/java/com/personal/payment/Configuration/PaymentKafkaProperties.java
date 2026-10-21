@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record PaymentKafkaProperties(
         String createdTopic,
         String decisionTopic,
-        String consumerGroupId
+        String consumerGroupId,
+        String notificationTopic
 ) {
 }

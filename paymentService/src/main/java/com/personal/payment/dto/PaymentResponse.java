@@ -1,6 +1,6 @@
 package com.personal.payment.dto;
 
-import com.personal.payment.entity.PaymentStatus;
+import com.personal.payment.enums.PaymentStatus;
 import lombok.Builder;
 
 import java.math.BigDecimal;

@@ -1,0 +1,100 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: shashank
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: users
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: username
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+
+              - column:
+                  name: role
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: 2
+      author: shashank
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            columnExists:
+              tableName: users
+              columnName: keycloak_subject
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: keycloak_subject
+                  type: VARCHAR(255)
+  - changeSet:
+      id: 3
+      author: shashank
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            uniqueConstraintExists:
+              tableName: users
+              columnNames: keycloak_subject
+      changes:
+        - addUniqueConstraint:
+            tableName: users
+            columnNames: keycloak_subject
+            constraintName: uq_users_keycloak_subject
+  - changeSet:
+      id: 4
+      author: shashank
+      preConditions:
+        - onFail: MARK_RAN
+        - columnExists:
+            tableName: users
+            columnName: password
+      changes:
+        - dropNotNullConstraint:
+            tableName: users
+            columnName: password
+            columnDataType: VARCHAR(255)
+  - changeSet:
+      id: 5
+      author: shashank
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            uniqueConstraintExists:
+              tableName: users
+              columnNames: email
+      changes:
+        - addUniqueConstraint:
+            tableName: users
+            columnNames: email
+            constraintName: uq_users_email

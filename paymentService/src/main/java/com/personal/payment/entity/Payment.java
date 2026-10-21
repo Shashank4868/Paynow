@@ -1,5 +1,6 @@
 package com.personal.payment.entity;
 
+import com.personal.payment.enums.PaymentStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;

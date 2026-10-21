@@ -1,6 +1,6 @@
 package com.personal.payment.kafka.event;
 
-import com.personal.payment.entity.FraudDecision;
+import com.personal.payment.enums.FraudDecision;
 
 import java.time.Instant;
 import java.util.UUID;
