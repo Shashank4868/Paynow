@@ -1,6 +1,7 @@
 package com.personal.frauddetection.infrastructure.kafka.outbound;
 
 import com.personal.frauddetection.application.FraudEvaluationService;
+import com.personal.frauddetection.config.FraudKafkaProperties;
 import com.personal.frauddetection.dto.FraudDecisionEvent;
 import com.personal.payment.event.PaymentCreatedEvent;
 import org.slf4j.Logger;
@@ -15,13 +16,18 @@ public class FraudEventPublisher {
     private final FraudEvaluationService fraudEvaluationService;
 
     private final KafkaTemplate<String, FraudDecisionEvent> paymentKafkaTemplate;
+    private final FraudKafkaProperties kafkaProperties;
 
-    public FraudEventPublisher(FraudEvaluationService fraudEvaluationService, KafkaTemplate<String, FraudDecisionEvent> kafkaTemplate) {
+    public FraudEventPublisher(FraudEvaluationService fraudEvaluationService,
+                               KafkaTemplate<String, FraudDecisionEvent> kafkaTemplate,
+                               FraudKafkaProperties kafkaProperties) {
         this.fraudEvaluationService = fraudEvaluationService;
         this.paymentKafkaTemplate = kafkaTemplate;
+        this.kafkaProperties = kafkaProperties;
     }
 
-    public void publish(PaymentCreatedEvent event, String topic) {
+    public void publish(PaymentCreatedEvent event) {
+        String topic = kafkaProperties.decisionTopic();
         log.debug("Publishing fraud decision for payment {} to {}", event.paymentId(), topic);
         FraudDecisionEvent fraudDecisionEvent = fraudEvaluationService.evaluate(event);
         paymentKafkaTemplate.send(topic, event.paymentId().toString(), fraudDecisionEvent);

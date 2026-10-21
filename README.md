@@ -135,7 +135,7 @@ Any other move is rejected with an `InvalidStateTransitionException`. A repeated
 
 - Payment event topic and consumer group defaults are `payment.created`, `payment.decision`, and `process-payment`. They can be overridden with `PAYMENT_CREATED_TOPIC`, `PAYMENT_DECISION_TOPIC`, and `KAFKA_CONSUMER_GROUP_ID`.
 - `NOTIFICATION_KAFKA_TOPIC` (default `notification-kafka-topic`) is read by both `paymentService` (producer) and `notification` (consumer), so set it to the same value in both. Notification also reads `CONSUMER_GROUP` (default `notification-service`).
-- The fraud service currently uses its topic names directly in its listener and publisher.
+- fraud-detection reads the same `PAYMENT_CREATED_TOPIC` and `PAYMENT_DECISION_TOPIC` as the payment service, so set them once for both. Its consumer group defaults to `fraud-detection` (override with `FRAUD_CONSUMER_GROUP_ID`), and its broker to `localhost:9092` (`KAFKA_BOOTSTRAP_SERVERS`).
 - The gateway validates Keycloak JWTs and routes `/payments/**` to the payment service (`PAYMENT_SERVICE_URL`, default `http://localhost:8081`) and `/users/**` to the auth service (`AUTH_SERVICE_URL`, default `http://localhost:8083`).
 
 ## Project layout
